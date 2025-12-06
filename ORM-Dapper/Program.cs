@@ -17,7 +17,7 @@ namespace ORM_Dapper
                  .Build();
 
             string connString = config.GetConnectionString("DefaultConnection");
-
+            //-------------Departments
             IDbConnection conn = new MySqlConnection(connString);
             var repo = new DapperDepartmentRepository(conn);
 
@@ -30,6 +30,35 @@ namespace ORM_Dapper
                 Console.WriteLine(department.Name);
             }
 
+            //-----------------Products
+            Console.WriteLine("Showing all products");
+            var products = new DapperProductRepository(conn);
+           
+           var allProducts = products.GetAllProducts();
+
+
+
+            foreach(var prods in allProducts)
+            {
+                Console.WriteLine(prods.Name);
+            }
+          
+
+            Console.WriteLine($"What is the new product name?");
+            var prodName = Console.ReadLine();
+
+            Console.WriteLine($"What is the new product's price?");
+            var price = Convert.ToDouble(Console.ReadLine());
+
+            Console.WriteLine($"What is the new product's category id?");
+            var categoryID = Convert.ToInt32(Console.ReadLine());
+
+            products.CreateProduct(prodName, price, categoryID);
+
+            foreach (var prods in allProducts)
+            {
+                Console.WriteLine(prods.Name);
+            }
         }
     }
 }

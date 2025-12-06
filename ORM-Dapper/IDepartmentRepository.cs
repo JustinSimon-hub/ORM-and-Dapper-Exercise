@@ -8,7 +8,7 @@ namespace ORM_Dapper
 {
     public interface IDepartmentRepository
     {
-        public IEnumerable<Department> GetAllDepartments();
-        public void InsertDepartment(string Name);
+         IEnumerable<Department> GetAllDepartments();
+         void InsertDepartment(string Name);
     }
 }
