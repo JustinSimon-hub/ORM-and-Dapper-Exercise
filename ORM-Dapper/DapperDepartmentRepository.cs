@@ -32,7 +32,10 @@ namespace ORM_Dapper
             new { departmentName = newDepartmentName });
 
         }
+        public void UpdateDepartment(int id, string newName)
+        {
+            _connection.Execute("UPDATE departments SET Name = @newName WHERE DepartmentID = @id;", new { newName = newName, id = id });
+        }
 
-       
     }
 }

@@ -1,48 +1,69 @@
 ﻿using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
+using ORM_Dapper;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Data;
-using System.Xml.Linq;
-using ZstdSharp.Unsafe;
-using static Org.BouncyCastle.Math.EC.ECCurve;
+using System.IO;
 
-namespace ORM_Dapper
+namespace BestBuyCRUD
 {
-    public class Program
+    class Program
     {
+        //allows us to grab the connection string information from the appsettings.json file
+        //-----------------------------------------------------------------
+        static IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+        static string connString = config.GetConnectionString("DefaultConnection");
+        //-----------------------------------------------------------------
+
+        //create our IDbConnection that uses MySql, so Dapper can extend it
+        static IDbConnection conn = new MySqlConnection(connString);
+
         static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                 .SetBasePath(Directory.GetCurrentDirectory())
-                 .AddJsonFile("appsettings.json")
-                 .Build();
+            ListProducts();
 
-            string connString = config.GetConnectionString("DefaultConnection");
-            //-------------Departments
-            IDbConnection conn = new MySqlConnection(connString);
-            var repo = new DapperDepartmentRepository(conn);
+            DeleteProduct();
 
-            Console.WriteLine("Write a department name.");
-            var newDepartmentName = Console.ReadLine();
-            repo.InsertDepartment(newDepartmentName);
-            var departments = repo.GetAllDepartments();
-            foreach(var department in departments)
-            {
-                Console.WriteLine(department.Name);
-            }
+            ListProducts();
+        }
 
-            //-----------------Products
-            Console.WriteLine("Showing all products");
-            var products = new DapperProductRepository(conn);
-           
-           var allProducts = products.GetAllProducts();
+        //We can use these methods that add user interaction with our Dapper Methods
+        public static void DeleteProduct()
+        {
+            //ProductRepository instance - so we can call our dapper methods
+            var prodRepo = new DapperProductRepository(conn);
 
+            //User interaction
+            Console.WriteLine($"Please enter the productID of the product you would like to delete:");
+            var productID = Convert.ToInt32(Console.ReadLine());
 
+            //Call the Dapper method
+            prodRepo.DeleteProduct(productID);
+        }
 
-            foreach(var prods in allProducts)
-            {
-                Console.WriteLine(prods.Name);
-            }
-          
+        public static void UpdateProductName()
+        {
+            var prodRepo = new DapperProductRepository(conn);
+
+            Console.WriteLine($"What is the productID of the product you would like to update?");
+            var productID = Convert.ToInt32(Console.ReadLine());
+
+            Console.WriteLine($"What is the new name you would like for the product with an id of {productID}?");
+            var updatedName = Console.ReadLine();
+
+            prodRepo.UpdateProductName(productID, updatedName);
+        }
+
+        public static void CreateAndListProducts()
+        {
+            //created instance so we can call methods that hit the database
+            var prodRepo = new DapperProductRepository(conn);
 
             Console.WriteLine($"What is the new product name?");
             var prodName = Console.ReadLine();
@@ -53,80 +74,70 @@ namespace ORM_Dapper
             Console.WriteLine($"What is the new product's category id?");
             var categoryID = Convert.ToInt32(Console.ReadLine());
 
-            products.CreateProduct(prodName, price, categoryID);
+            prodRepo.CreateProduct(prodName, price, categoryID);
 
-            foreach (var prods in allProducts)
+
+            //call the GetAllProducts method using that instance and store the result
+            //in the products variable
+            var products = prodRepo.GetAllProducts();
+
+            //print each product from the products collection to the console
+            foreach (var product in products)
             {
-                Console.WriteLine(prods.Name);
+                Console.WriteLine($"{product.ProductID} {product.Name}");
             }
         }
+
+        public static void ListProducts()
+        {
+            var prodRepo = new DapperProductRepository(conn);
+            var products = prodRepo.GetAllProducts();
+
+            //print each product from the products collection to the console
+            foreach (var product in products)
+            {
+                Console.WriteLine($"{product.ProductID} {product.Name}");
+            }
+        }
+
+        public static void ListDepartments()
+        {
+            var repo = new DapperDepartmentRepository(conn);
+
+            var departments = repo.GetAllDepartments();
+
+            foreach (var item in departments)
+            {
+                Console.WriteLine($"{item.DepartmentID} {item.Name}");
+            }
+        }
+
+        public static void DepartmentUpdate()
+        {
+            var repo = new DapperDepartmentRepository(conn);
+
+            Console.WriteLine($"Would you like to update a department? yes or no");
+
+            if (Console.ReadLine().ToUpper() == "YES")
+            {
+                Console.WriteLine($"What is the ID of the Department you would like to update?");
+
+                var id = Convert.ToInt32(Console.ReadLine());
+
+                Console.WriteLine($"What would you like to change the name of the department to?");
+
+                var newName = Console.ReadLine();
+
+                repo.UpdateDepartment(id, newName);
+
+                var depts = repo.GetAllDepartments();
+
+                foreach (var item in depts)
+                {
+                    Console.WriteLine($"{item.DepartmentID} {item.Name}");
+                }
+            }
+        }
+
     }
 }
-
-
-
-//## Exercise One
-//Taking what we’ve learned in class, implement Dapper inside this application.
-
-//We’ll start with Departments:
-//1.Ignore appsettings.json file in .gitignore and commit
-//2. Create appsettings.json in netcoreapp folder
-//3.Run a git status to make sure appsettings is ignored
-//4. Add the MySql.Data Nuget Package
-//5. Add the Dapper Nuget package
-//6. Add the Microsoft.Extensions.Configuration.Json Nuget package
-//7. Make sure your config code is in your main method
-
-//```
-//var config = new ConfigurationBuilder()
-//                .SetBasePath(Directory.GetCurrentDirectory())
-//                .AddJsonFile("appsettings.json")
-//                .Build();
-
-//string connString = config.GetConnectionString("DefaultConnection");
-
-//IDbConnection conn = new MySqlConnection(connString);
-//```
-
-//8.Create a Department class
-//9.Create an IDepartmentRepository interface
-//10.Create a DapperDepartmentRepository class
-//11.Create a GetAllDepartments Method
-//12. Create an InsertDepartment Method
-
-//Once finished, save, commit, and push back to Github
-
-//## Exercise Two
-
-//1. Create a public Product Class -this class will contain public properties that represent each column in the Products table.
-//```
-//// For example:
-//public int ProductID { get; set; }
-//```
-
-//2.Create a IProductRepository Interface - this interface will have:
-//+A GetAllProducts() method:
-//   ```
-//       IEnumerable<Product> GetAllProducts();
-//   ```
-//   +A CreateProduct(string name, double price, int categoryID) method:
-//   ```
-//   void CreateProduct(string name, double price, int categoryID);
-//   ```
-//3.Create a DapperProductRepository Class that conforms to the IProductRepository interface. Here we will define our Methods.
-
-//4.Implement our new methods in the Main method of Program.cs
-
-//## Bonus:
-//Create the UpdateProduct method in the DapperProductRepository class and implement in Program.cs
-
-//## Extra Bonus:
-//Create the DeleteProduct method
-//HINT: You will need to delete records from the Sales table and the Reviews table where that Product may be referenced. You can do this all in the DeleteProduct method you are creating
-
-//Finished Version:
-//https://github.com/mvdoyle/BestBuyBestPractices
-
-
-
-   

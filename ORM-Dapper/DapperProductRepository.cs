@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ORM_Dapper
 {
-    public class DapperProductRepository : IProductRepository
+    public class DapperProductRepository 
     {
         private readonly IDbConnection _connection;
         public DapperProductRepository(IDbConnection connection)
@@ -39,11 +39,11 @@ namespace ORM_Dapper
                new { productID = productId });
         }
 
-       
-        public void UpdateProduct(Product product)
+        public void UpdateProductName(int productID, string updatedName)
         {
-            _connection.Execute("UPDATE Products SET Name = @Name, Price = @Price, CategoryID = @CategoryID WHERE ProductID = @ProductID;",
-                new { Name = product.Name, Price = product.Price, CategoryID = product.CategoryID, ProductID = product.ProductID });
+            _connection.Execute("UPDATE products SET Name = @updatedName WHERE ProductID = @productID;",
+                new { updatedName = updatedName, productID = productID });
         }
+
     }
 }

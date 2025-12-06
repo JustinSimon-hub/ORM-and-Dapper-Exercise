@@ -11,6 +11,6 @@ namespace ORM_Dapper
         IEnumerable<Product> GetAllProducts();
         void CreateProduct(string name, double price, int categoryId); 
         void DeleteProduct(int productId);
-        void UpdateProduct(Product product);
+        void UpdateProductName(Product product);
     }
 }
